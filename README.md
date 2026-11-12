@@ -105,3 +105,29 @@ python tools/report_official_eval.py --results-dir runs/official
 ```
 
 This wrapper never downloads private datasets, changes competition rules, or fabricates scores. Follow the official harness for exact model-server setup; retain its raw task logs and traces. The reporting tool labels incomplete task outcomes as **unknown**, not failed or passed.
+
+## Development self-audit: production repository retrieval
+
+For a second sanity check beyond the seven synthetic fixtures, `experiments/self_audit_tasks.jsonl` defines **15 manually curated queries** against source files **in this repository itself**. The labels are not hidden or independently collected and are **not** evidence of generalization or patch correctness. The queries were authored by someone familiar with the code, so evaluation bias is substantial.
+
+```
+python experiments/self_audit.py
+```
+
+With the default budgets and current source snapshot, preliminary target-file retrieval results are:
+
+| Context characters | Lexical | Structural | File graph | Evidence graph |
+|---:|---:|---:|---:|---:|
+| 700 | 53.3% | 26.7% | 26.7% | 40.0% |
+| 1,500 | 80.0% | 60.0% | 60.0% | 80.0% |
+| 3,000 | 80.0% | 80.0% | 80.0% | 86.7% |
+
+**Important negative evidence:** At the tightest budget (700 characters), the evidence graph performed *worse* than simple lexical retrieval. Even at 1,500 characters, it only matched lexical retrieval. This motivates adaptive graph expansion and a properly held-out benchmark, not a claim that graphs always improve repair. These development-only numbers may change as code is added to this repository.
+
+## Model and navigation ablations (unscored candidates)
+
+```
+python tools/build_variants.py
+```
+
+This generates four independently valid **local-structure** ZIPs in `artifacts/variants/`: `graph_12b.zip` (current default), `lexical_12b.zip` (same 12B model and tool declarations, with graph navigation suppressed in the prompt), `graph_e4b.zip` and `graph_31b.zip` (same graph policy, different supported Gemma model sizes). The navigation A/B pair shares all declared budgets, tools and generation settings. These variants have **not** yet been run on official Kaggle public tasks; the build is an artifact contract test, not an accuracy comparison. Use the official harness to evaluate them on identical task IDs and report outcomes before selecting the final submission. The Kaggle competition limits how many external submissions may be made.
