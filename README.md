@@ -1,65 +1,85 @@
-# GEMMA4: Repository-Aware Code Retrieval Research
+# GEMMA4 | Evidence-Guided Coding Agent & Research Framework
 
-Research prototype for comparing lexical, AST-based and import-graph-assisted source retrieval as possible context selection methods for Gemma 4 coding agents.
+An experimental **Gemma 4 developer agent** for repository-level Python software repair, with an auditable retrieval testbed and a self-contained **Kaggle competition config**. The goal is to test whether graph-aware context selection produces more correct source patches at a fixed time and context budget.
 
-**Current status:** Retrieval prototype only. No Gemma 4 inference, patch generation, SWE-bench scoring, or original real-world performance results have been implemented or established.
+> **Evidence boundary:** All successful repair tests in this repository currently use a scripted **mock model** on trusted toy repositories. The Kaggle submission package has been generated locally, but has **not been accepted or scored by the official competition harness**. No original Gemma 4/SWE-bench pass rate is claimed.
 
-## What is implemented
+## Architecture
 
-- Read-only Python repository indexing using the standard-library AST parser.
-- Lexical retrieval and structural symbol weighting.
-- Graph method using **one-hop local import adjacency**, not a full function call graph.
-- Deterministic source excerpt selection with a **character budget** (a proxy, not a tokenizer-measured token budget).
-- Unit tests and a small **synthetic smoke test** to verify the software works.
+```
+Issue / repository
+  |-- Research pipeline: AST index -> lexical/structural/file-graph/evidence-graph -> context pack
+  |       -> local Gemma-compatible API adapter -> unified patch -> scratch workspace -> optional trusted test -> trace
+  |
+  +-- Kaggle pipeline: submission/agent.yaml -> official ADK compiler -> Gemma 4 + 9 harness tools
+          -> code search, graph reasoning, minimal edits, targeted tests -> submit_patch
+```
 
-## Run locally
+**The Kaggle agent is separate from the standalone Python repair loop.** Kaggle's official harness reads a declarative YAML archive, not the local `src/` package. The agent prompt uses the harness's native graph and file tools. The Python retrieval code supports independently reproducible analysis, but its code is not automatically loaded into the competition agent.
 
-Requires Python 3.10+; no external Python dependencies for the prototype.
+## Quick start (Python 3.11+)
 
-```bash
+```
 python -m unittest discover -s tests -v
 python experiments/pilot.py
+python experiments/make_synthetic_suite.py
+python experiments/compare_retrieval.py --help
+python tools/build_submission.py
 ```
 
-## Experimental integrity
+The builder produces:
 
-The 3-case pilot uses hand-written fixtures and **must not be presented as scientific evidence** of an improvement. Actual comparative research requires preselected public repair tasks, fixed model/runtime/token budgets, multiple seeds or paired task runs, and a task verifier that measures **successful repairs**, not just retrieved-file relevance.
+- `artifacts/submission.zip`, with **agent.yaml at the ZIP root** (never `submission/agent.yaml`).
+- `notebooks/kaggle_submit.ipynb`, a self-contained, internet-off Kaggle notebook that reconstructs the same configuration archive.
 
-- The existing `GEMMA4.ipynb` was exported from Colab; it currently contains setup cells, not agent implementation.
-- The earlier Kaggle starter notebook is a separate reference. It contains a paper-style hardware/telemetry analysis with embedded example tables and should not be treated as our original measured results without independent verification and proper attribution.
-- `PLAN.md` contains the longer research and competition execution roadmap.
+### Kaggle submission workflow
 
-## Next steps
+1. Open the **Developer Agent Competition** on Kaggle and accept its rules before the entry deadline.
+2. Open `notebooks/kaggle_submit.ipynb` as a new **Kaggle notebook** with the official competition data attached.
+3. Disable internet, run all cells, verify `/kaggle/working/submission.zip` exists and `agent.yaml` is at its root.
+4. **Before final submission**, test the resulting zip using the official Kaggle **swegemma** / ADK compiler and one public task. Our static builder alone is not enough to guarantee harness acceptance.
+5. Submit the generated archive according to the current Kaggle competition instructions and confirm the result/score.
 
-1. Validate actual Kaggle dataset schema and licenses in the Kaggle runtime.
-2. Create a held-out task manifest and baseline localization labels without leaking reference patches into the model prompt.
-3. Integrate official Gemma 4 model serving and fixed-context prompts.
-4. Add sandboxed patch application and verification with clean worktrees.
-5. Execute paired retrieval/repair benchmarks, publish raw results and limitations.
+**Chosen candidate:** `gemma-4-12b-it-qat-w4a16-ct`, single agent, no LoRA. This is an initial compute/quality tradeoff, not a measured optimum. The main track also permits other Gemma 4 variants; compare them on public tasks before selecting a final one.
 
-## Extended research framework: Evidence-Graph Retrieval (EGR)
+### Optional standalone API repair CLI
 
-The original prototype now has a separately testable research extension:
+This path is only for controlled development and works with any locally served **OpenAI-compatible** text-completions endpoint. Launch an appropriate local server separately, then:
 
-- **Symbol and static-call evidence graph:** local imports, imported-function aliases, and direct class-method relationships. Includes provenance of inferred edges and a confidence heuristic (not statistically calibrated).
-- **Four controlled ablations:** lexical, structural, file graph, and evidence graph, sharing a source-character budget and selection policy.
-- **Auditable selection traces:** every retrieved span includes its path, line interval, score, estimated source length, and selection rationale.
-- **Paired, reproducible evaluation:** per-task file localization at multiple character budgets, mean reciprocal rank, paired win/loss/tie counts, and bootstrap intervals.
-- **A deliberately toy benchmark:** to demonstrate mechanics, without presenting toy outcomes as generalizable research.
-- **No model integration yet:** this cannot produce executable agent patches or an official Kaggle leaderboard score.
-
-### Run the expanded suite
-
-```bash
-python -m unittest discover -s tests -v
-python experiments/make_synthetic_suite.py --output-dir runs/toy_suite
-python experiments/compare_retrieval.py runs/toy_suite/toy_tasks.jsonl --budgets 200 400 800 --output runs/toy_retrieval_report.json
+```
+PYTHONPATH=src python -m gemma4_agent.local_agent \
+  --repo ./some-trusted-python-project \
+  --issue "The parser crashes when its input is empty" \
+  --endpoint http://127.0.0.1:8000/v1/chat/completions \
+  --model gemma-4-12b-it-qat-w4a16-ct \
+  --out repair_report.json
 ```
 
-For real localization tasks, create an accessible JSONL manifest, one entry per task:
+It generates a proposed unified patch and applies it only inside a **temporary copy**. It does **not** execute tests by default. For trusted development fixtures only, add `--allow-local-tests --test-command 'python -m unittest discover -s tests -q'` to execute a test runner; untrusted code requires an external sandbox. Results are recorded as JSON; the original repository is unchanged.
 
-```json
-{"task_id":"issue-001","repository":"/path/to/exact/repository/checkout","issue":"summary without gold target information","target_files":["pkg/module.py"],"split":"dev"}
-```
+## Files
 
-The target file(s) are **evaluation-only oracle labels**. Do not add them to issue descriptions, retrieval context, or model prompts. Keep a frozen held-out split; check licenses and avoid private evaluation data. See [research design](paper/RESEARCH_DESIGN.md).
+| Location | Purpose |
+|---|---|
+| `submission/` | Competition agent.yaml, system prompt, model sampling and time budget |
+| `tools/build_submission.py` | Static preflight + reproducible ZIP / Kaggle notebook builder |
+| `notebooks/kaggle_submit.ipynb` | Self-contained Kaggle internet-off archive generator |
+| `src/gemma4_agent/evidence_graph.py` | Repository index, local AST and static call evidence |
+| `src/gemma4_agent/local_agent.py` | Development-only model/patch/test orchestrator |
+| `src/gemma4_agent/evaluation.py` | Paired, auditable read-only context-localization metrics |
+| `experiments/` | Synthetic fixtures and retriever comparisons |
+| `tests/` | Unit, artifact, and scripted-model integration tests |
+| `paper/` | Research methodology and work-in-progress writeup |
+| `docs/` | Release checklist, handoff, security limitations |
+
+## Scientific integrity
+
+Experiments to date use **synthetic localization cases**, not an independently held-out SWE-bench test set. A correct-file retrieval result is not a resolved bug. Real claims require actual Gemma 4 inference, a verifier, paired tasks, identical budgets, and independently reproducible logs. Do not use gold patches or hidden verifier information as prompt input.
+
+See [release gates](docs/RELEASE_CHECKLIST.md), [handoff](docs/HANDOFF.md), and [security model](docs/SECURITY.md).
+
+## Sources
+
+- [Official Gemma 4 Developer Agent Competition](https://www.kaggle.com/competitions/gemma-4-developer-agent/overview)
+- [Official Paper Track](https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements)
+- [Existing research design](paper/RESEARCH_DESIGN.md)
