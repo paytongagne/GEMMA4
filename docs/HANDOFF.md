@@ -31,3 +31,11 @@ The tests include a mock model and **do not prove real Gemma 4 repair success**.
 ## Official evaluator adapters
 - `tools/official_eval.py`: safe no-shell command assembly, defaults to dry-run, requires explicit `--execute` and both official `swegemma` and Docker.
 - `tools/report_official_eval.py`: task-level outcome aggregation with unknown-outcome handling and failure taxonomy. Not a Kaggle leaderboard score.
+
+## Real repository development audit
+- `experiments/self_audit_tasks.jsonl`: 15 manually labeled tasks targeting this codebase.
+- `experiments/self_audit.py`: reruns read-only retrieval at three source-character budgets and outputs JSON with per-task selections.
+- Results are not SWE-bench; evidence graphs lose to lexical retrieval at 700 characters, tie at 1500, and mildly improve in the curated 3000-character setting. Do not claim efficacy beyond these tasks.
+
+## Paired development variants
+`tools/build_variants.py` packages `graph_12b` vs `lexical_12b` with matched model/tool/budget settings, plus `graph_e4b` and `graph_31b` for model-size tests. None are scored yet; preserve identical task IDs and avoid selecting hyperparameters on the private leaderboard.
