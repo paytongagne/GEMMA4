@@ -1,0 +1,15 @@
+{"task_id": "SELF-01", "repository": "..", "issue": "relative imports are resolved when source is indexed", "target_files": ["src/gemma4_agent/evidence_graph.py"], "split": "curated_development"}
+{"task_id": "SELF-02", "repository": "..", "issue": "build evidence graph by analyzing AST functions and calls", "target_files": ["src/gemma4_agent/evidence_graph.py"], "split": "curated_development"}
+{"task_id": "SELF-03", "repository": "..", "issue": "compute graph bonus for connected symbols in context retrieval", "target_files": ["src/gemma4_agent/evidence_graph.py"], "split": "curated_development"}
+{"task_id": "SELF-04", "repository": "..", "issue": "calculate bootstrap confidence intervals for paired recall tests", "target_files": ["src/gemma4_agent/evaluation.py"], "split": "curated_development"}
+{"task_id": "SELF-05", "repository": "..", "issue": "load task manifest and reject duplicate task identifiers", "target_files": ["src/gemma4_agent/evaluation.py"], "split": "curated_development"}
+{"task_id": "SELF-06", "repository": "..", "issue": "generate offline Kaggle notebook with embedded submission files", "target_files": ["tools/build_submission.py"], "split": "curated_development"}
+{"task_id": "SELF-07", "repository": "..", "issue": "validate yaml include paths and supported model names", "target_files": ["tools/build_submission.py"], "split": "curated_development"}
+{"task_id": "SELF-08", "repository": "..", "issue": "apply unified diff patch in a temporary workspace with git apply", "target_files": ["src/gemma4_agent/local_agent.py"], "split": "curated_development"}
+{"task_id": "SELF-09", "repository": "..", "issue": "send system prompt and user prompt to OpenAI compatible chat endpoint", "target_files": ["src/gemma4_agent/local_agent.py"], "split": "curated_development"}
+{"task_id": "SELF-10", "repository": "..", "issue": "protect test files from generated patches", "target_files": ["src/gemma4_agent/local_agent.py"], "split": "curated_development"}
+{"task_id": "SELF-11", "repository": "..", "issue": "launch official swegemma evaluator with docker task id and tool budget", "target_files": ["tools/official_eval.py"], "split": "curated_development"}
+{"task_id": "SELF-12", "repository": "..", "issue": "aggregate official task resolution statistics and error categories", "target_files": ["tools/report_official_eval.py"], "split": "curated_development"}
+{"task_id": "SELF-13", "repository": "..", "issue": "synthetic repository test suite generation and task manifest", "target_files": ["experiments/make_synthetic_suite.py"], "split": "curated_development"}
+{"task_id": "SELF-14", "repository": "..", "issue": "run paired retrieval benchmark from command line and save results", "target_files": ["experiments/compare_retrieval.py"], "split": "curated_development"}
+{"task_id": "SELF-15", "repository": "..", "issue": "build graph unit tests for imported function call relationships", "target_files": ["tests/test_evidence_graph.py"], "split": "curated_development"}
