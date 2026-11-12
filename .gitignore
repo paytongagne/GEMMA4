@@ -8,3 +8,6 @@ runs/
 results/private/
 *.gguf
 *.safetensors
+
+artifacts/
+repair_report.json
