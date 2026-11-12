@@ -2,11 +2,11 @@
 
 **Subtitle:** A controlled comparison of lexical, structural, import-neighbor, and static-call evidence for local coding agents
 
-**Status: preliminary resource paper; only toy localization results are measured. No Gemma 4 inference or repair experiments are claimed.**
+**Status: preliminary resource paper; measured results are synthetic and curated-development localization, not Gemma 4 repair. The competition agent is a candidate configuration without official model/harness verification.**
 
 ## Abstract
 
-Repository-level software repair requires selecting context from codebases that are often much larger than the prompt budget available to a local language model. Retrieving the function named in an issue may not be sufficient when the underlying problem involves a callee, a neighboring module, or a class method. We introduce an open-source, read-only research prototype for studying how progressively richer static code relationships change context selection under fixed source-character budgets. The prototype constructs a symbol-aware Python index, records import and direct-call relationships, and compares four deterministic retrieval conditions. It also produces per-selection evidence traces and paired, task-level localization reports. In a deliberately small, seven-task synthetic smoke test, import-neighbor retrieval increased any-target-file recall from 6/7 to 7/7 at budgets of 400 and 800 source characters, but a call-aware evidence graph yielded no further gain. These observations establish the operation of the testbed, not generalization to real repositories or improvement in Gemma 4 issue resolution. We present the controlled protocol, failure modes, and required next evaluations as a reproducibility-oriented resource for more rigorous research on bounded-context coding assistants.
+Repository-level software repair requires selecting context from codebases that are often much larger than the prompt budget available to a local language model. Retrieving the function named in an issue may not be sufficient when the underlying problem involves a callee, a neighboring module, or a class method. We introduce an open-source, read-only research prototype for studying how progressively richer static code relationships change context selection under fixed source-character budgets. The prototype constructs a symbol-aware Python index, records import and direct-call relationships, and compares four deterministic retrieval conditions. It also produces per-selection evidence traces and paired, task-level localization reports. In a deliberately small, seven-task synthetic smoke test, import-neighbor retrieval increased any-target-file recall from 6/7 to 7/7 at budgets of 400 and 800 source characters, but a call-aware evidence graph yielded no further gain. We also evaluate fifteen manually curated questions against the project's own evolving Python repository. At a 700-character budget, lexical retrieval found the target file on 8/15 tasks versus 6/15 for the symbol-evidence graph; at 3,000 characters the pattern reversed to 12/15 versus 13/15. These contradictory results show that graph propagation has a real context cost and cannot be assumed helpful. The two evaluations establish operation and failure modes of the testbed, not generalization to independent repositories or improved Gemma 4 issue resolution. We also provide a candidate declarative Gemma 4 agent configuration with the official navigation tools, pending official harness evaluation.
 
 ## 1. Motivation and research question
 
@@ -59,25 +59,39 @@ A deliberately small, seven-task synthetic suite includes imported aliases, cros
 
 These figures come from the local synthetic generator and evaluator and can be reproduced with the commands in `README.md`. The 400-character graph-versus-lexical difference was only one task out of seven; the paired bootstrap interval includes zero. The additional call-site evidence did **not** improve recall over import adjacency on these tasks. This is a meaningful limitation of the current fixture and a reason to evaluate varied real-world defects rather than selectively report successes.
 
-The code passed 17 local unit tests, including budget enforcement, deterministic selection, AST fallback, import aliases, and report reproducibility. These tests validate software behavior, not model performance.
+### 4.1 Curated development queries on a non-synthetic repository
+
+A secondary diagnostic uses **15 manually formulated queries** about the implementation files in this same evolving GitHub project. Each query names an actual API behavior; its expected file was chosen by the developers. These queries are **not held out**, the repository is **not frozen**, and the author knows where the answers are. They are not an unbiased sample of public issues, and the labels must not be used to claim external validity.
+
+| Source-character budget | Lexical: any-file recall | Structural | File graph | Evidence graph |
+|---|---:|---:|---:|---:|
+| 700 | 8/15 | 4/15 | 4/15 | 6/15 |
+| 1,500 | 12/15 | 9/15 | 9/15 | 12/15 |
+| 3,000 | 12/15 | 12/15 | 12/15 | 13/15 |
+
+The tight-budget regression is particularly instructive: on some queries, graph bonuses elevate connected but less relevant code or test helpers above the expected source. A different failure mode occurs when an oversized function occupies most of the budget. We found and corrected an indexing contamination bug that included generated `runs/` artifacts; the revised index excludes such outputs. The self-audit data remains exploratory because future code changes will change the candidate pool and potentially the values reported here. The recorded queries and per-task output allow exact reruns against the corresponding source snapshot.
+
+### 4.2 Engineering tests and candidate agent integration
+
+The project passed **32 local tests** covering AST import/call analysis, safe context budgets, paired evaluator reporting, ZIP packaging, notebook reconstruction, and a scripted-model patch that passes a focused unit test in a temporary workspace. This integration test uses an explicitly **mocked model**, not Gemma 4. A self-contained Kaggle notebook can emit a candidate `submission.zip` with the required root `agent.yaml`, model declaration, system prompt, and supported tools. Only the official ADK compiler and a real Gemma 4 public development task can establish competition acceptance and actual software-repair accuracy. The local tests validate software behavior, **not** model performance.
 
 ## 5. Error analysis and threats to validity
 
-- **Synthetic data:** manually written task wording and targets do not represent the distribution of real GitHub issues.
+- **Synthetic and researcher-curated data:** task wording and targets do not represent the distribution of independent GitHub issues. The self-audit is known to the authors and is not held out.
 - **Static Python limitations:** dynamically resolved names, monkey patching, re-exports, decorators, and runtime reflection can invalidate an inferred dependency graph.
 - **Selection bias:** source length, identifier choice, and default retrieval weights may influence outcomes. Hyperparameters must be frozen before held-out evaluation.
 - **Proxy budget:** character count excludes metadata and is not equivalent to model tokens or runtime cost.
 - **Oracle ambiguity:** a patch can repair an issue by changing a file not listed in a reference patch; gold-file recall is imperfect.
-- **No model experiment:** the paper cannot infer Gemma 4 patch success, model reasoning ability, or GPU serving efficiency.
+- **No Gemma model experiment:** a mocked patch-validation integration test confirms plumbing only; the paper cannot infer Gemma 4 patch success, model reasoning ability, or GPU serving efficiency.
 - **No novelty guarantee:** code graphs and retrieval-augmented coding are established techniques. The proposed testbed should be judged on reproducibility and diagnostic utility, pending realistic experiments.
 
 ## 6. Proposed next experiment
 
-The most informative follow-up is a pre-registered, paired real-repository evaluation with frozen task selection and a small set of fixed budgets. The next stage should stratify tasks by whether their described symptom is located in a caller, a callee, or an unrelated file. That would directly test whether graph propagation helps on cross-file symptoms while harming or wasting context on direct, single-file bugs. Once a compatible Gemma 4 runtime is connected to the official competition harness, repair tests can determine whether better retrieval results in more correct patches. Until those runs exist, no repair-rate conclusion is justified.
+The most informative follow-up is a pre-registered, paired real-repository evaluation with frozen task selection and a small set of fixed budgets. The next stage should stratify tasks by whether their described symptom is located in a caller, a callee, or an unrelated file. That would directly test whether graph propagation helps on cross-file symptoms while harming or wasting context on direct, single-file bugs. The current submission candidate is a single Gemma 4 12B agent whose instructions use the official harness's graph, file, editing, testing, and patch-submission tools. Paired, structurally identical lexical-navigation and graph-navigation candidates are generated with fixed models and budgets, alongside 4B and 31B configurations for later model-size comparisons. None of these candidates has been scored. The next experiment must run the official public development harness with frozen issue IDs and a live supported Gemma 4 checkpoint, then capture per-task traces, patch-apply outcomes, true test success, and runtime. Until those runs exist, no repair-rate conclusion is justified.
 
 ## 7. Conclusion
 
-We release an inspectable prototype for comparing repository context-selection strategies with paired, bounded-budget evaluation. The preliminary toy check demonstrates reproducibility and exposes a negative result: deeper graph propagation was not better than simple import adjacency in this tiny suite. The principal value of the work is a framework for measuring and explaining context-selection decisions; claims about actual software repair remain contingent on rigorous real-task and model-in-the-loop evaluation.
+We release an inspectable prototype for comparing repository context-selection strategies with paired, bounded-budget evaluation. The preliminary toy check demonstrates reproducibility and exposes a negative result: deeper graph propagation was not better than simple import adjacency in this tiny suite. The development self-audit also shows that evidence graphs can decrease retrieval recall when the context budget is very small, underscoring the importance of publishing negative ablations. The principal value of the work is a framework for measuring and explaining context-selection decisions, accompanied by a reproducible candidate-agent artifact. Claims about actual software repair remain contingent on independent real-task and model-in-the-loop evaluation.
 
 ## References
 
