@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gemma4-agent-research"
+version = "0.3.0"
+description = "Evidence-guided repository retrieval research and a Kaggle Gemma 4 repair-agent submission"
+requires-python = ">=3.11"
+readme = "README.md"
+authors = [{name = "Payton Gagne"}]
+dependencies = []
+
+[project.scripts]
+gemma4-repair = "gemma4_agent.local_agent:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
