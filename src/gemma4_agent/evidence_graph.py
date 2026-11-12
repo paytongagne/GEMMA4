@@ -15,7 +15,7 @@ from typing import Literal
 
 STOP = {"a", "an", "and", "are", "as", "be", "by", "for", "from", "in", "is", "it", "of", "on", "or", "the", "to", "was", "when", "with", "not", "this", "should"}
 METHOD = Literal["lexical", "structural", "file_graph", "evidence_graph"]
-EXCLUDED = {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist", ".tox", ".mypy_cache"}
+EXCLUDED = {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist", ".tox", ".mypy_cache", "runs", "artifacts"}
 
 
 def tokenize(value: str) -> set[str]:
