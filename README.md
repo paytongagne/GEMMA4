@@ -83,3 +83,25 @@ See [release gates](docs/RELEASE_CHECKLIST.md), [handoff](docs/HANDOFF.md), and 
 - [Official Gemma 4 Developer Agent Competition](https://www.kaggle.com/competitions/gemma-4-developer-agent/overview)
 - [Official Paper Track](https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements)
 - [Existing research design](paper/RESEARCH_DESIGN.md)
+
+## Official public-task evaluation (requires Kaggle environment)
+
+This runs **only** where the competition's official `swegemma` CLI, permitted model checkpoint, task snapshots and Docker are present. It does not run in an ordinary CPU-only environment.
+
+```
+# First inspect the command without executing anything:
+python tools/official_eval.py \
+  --tasks /path/to/tasks.jsonl \
+  --snapshots-dir /path/to/snapshots \
+  --task-id YOUR_PUBLIC_DEV_TASK_ID
+
+# After reviewing paths and selecting an allowed public development task:
+python tools/official_eval.py \
+  --tasks /path/to/tasks.jsonl \
+  --snapshots-dir /path/to/snapshots \
+  --task-id YOUR_PUBLIC_DEV_TASK_ID --execute
+
+python tools/report_official_eval.py --results-dir runs/official
+```
+
+This wrapper never downloads private datasets, changes competition rules, or fabricates scores. Follow the official harness for exact model-server setup; retain its raw task logs and traces. The reporting tool labels incomplete task outcomes as **unknown**, not failed or passed.
