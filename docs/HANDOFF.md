@@ -27,3 +27,7 @@ The tests include a mock model and **do not prove real Gemma 4 repair success**.
 3. Compare retrieval-first versus baseline prompts on the same tasks with equal tool-call/time budgets. Investigate costly exploration and unsuccessful patches.
 4. Select measured model size and budget, freeze config, and submit through Kaggle before Dec 2, 2026.
 5. Separately submit the Paper Track Kaggle Writeup before its November 12 deadline, if still possible.
+
+## Official evaluator adapters
+- `tools/official_eval.py`: safe no-shell command assembly, defaults to dry-run, requires explicit `--execute` and both official `swegemma` and Docker.
+- `tools/report_official_eval.py`: task-level outcome aggregation with unknown-outcome handling and failure taxonomy. Not a Kaggle leaderboard score.
