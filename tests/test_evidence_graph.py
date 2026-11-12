@@ -94,3 +94,14 @@ class EvidenceGraphTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class GeneratedArtifactExclusionTests(unittest.TestCase):
+    def test_runs_directory_not_indexed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'source.py').write_text('def real_symbol():\n    return 1\n')
+            (root / 'runs').mkdir()
+            (root / 'runs' / 'scratch.py').write_text('def misleading_symbol():\n    return 2\n')
+            graph = index_evidence_graph(root)
+            self.assertTrue(any(s.path == 'source.py' for s in graph.spans))
+            self.assertFalse(any(s.path.startswith('runs/') for s in graph.spans))
