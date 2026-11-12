@@ -36,3 +36,30 @@ The 3-case pilot uses hand-written fixtures and **must not be presented as scien
 3. Integrate official Gemma 4 model serving and fixed-context prompts.
 4. Add sandboxed patch application and verification with clean worktrees.
 5. Execute paired retrieval/repair benchmarks, publish raw results and limitations.
+
+## Extended research framework: Evidence-Graph Retrieval (EGR)
+
+The original prototype now has a separately testable research extension:
+
+- **Symbol and static-call evidence graph:** local imports, imported-function aliases, and direct class-method relationships. Includes provenance of inferred edges and a confidence heuristic (not statistically calibrated).
+- **Four controlled ablations:** lexical, structural, file graph, and evidence graph, sharing a source-character budget and selection policy.
+- **Auditable selection traces:** every retrieved span includes its path, line interval, score, estimated source length, and selection rationale.
+- **Paired, reproducible evaluation:** per-task file localization at multiple character budgets, mean reciprocal rank, paired win/loss/tie counts, and bootstrap intervals.
+- **A deliberately toy benchmark:** to demonstrate mechanics, without presenting toy outcomes as generalizable research.
+- **No model integration yet:** this cannot produce executable agent patches or an official Kaggle leaderboard score.
+
+### Run the expanded suite
+
+```bash
+python -m unittest discover -s tests -v
+python experiments/make_synthetic_suite.py --output-dir runs/toy_suite
+python experiments/compare_retrieval.py runs/toy_suite/toy_tasks.jsonl --budgets 200 400 800 --output runs/toy_retrieval_report.json
+```
+
+For real localization tasks, create an accessible JSONL manifest, one entry per task:
+
+```json
+{"task_id":"issue-001","repository":"/path/to/exact/repository/checkout","issue":"summary without gold target information","target_files":["pkg/module.py"],"split":"dev"}
+```
+
+The target file(s) are **evaluation-only oracle labels**. Do not add them to issue descriptions, retrieval context, or model prompts. Keep a frozen held-out split; check licenses and avoid private evaluation data. See [research design](paper/RESEARCH_DESIGN.md).
